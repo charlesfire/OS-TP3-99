@@ -8,7 +8,6 @@ namespace JC9
 {
     class Message final
     {
-        friend sf::Packet& operator >> (sf::Packet& packet, Message& message);
         public:
             enum Type : sf::Uint16 {};
 
@@ -17,23 +16,16 @@ namespace JC9
             ~Message() = default;
             Type GetType()const;
             const std::string& GetMessage()const;
+            void SetType(Type type);
+            void SetMessage(const std::string&);
         private:
             std::string message;
             Type type;
     };
 
-    sf::Packet& operator << (sf::Packet& packet, const Message& message)
-    {
-        return packet << message.GetType() << message.GetMessage();
-    }
+    sf::Packet& operator << (sf::Packet& packet, const Message& message);
 
-    sf::Packet& operator >> (sf::Packet& packet, Message& message)
-    {
-        sf::Uint16 type;
-        packet >> type >> message.message;
-        message.type = static_cast<Message::Type>(type);
-        return packet;
-    }
+    sf::Packet& operator >> (sf::Packet& packet, Message& message);
 }
 
 #endif // MESSAGE_HPP
