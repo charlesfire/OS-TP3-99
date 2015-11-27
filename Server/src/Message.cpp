@@ -30,7 +30,7 @@ void Message::SetMessage(const std::string& message)
 
 sf::Packet& operator << (sf::Packet& packet, const Message& message)
 {
-    return packet << message.GetType() << message.GetMessage();
+    return packet << static_cast<sf::Uint16>(message.GetType()) << message.GetMessage();
 }
 
 sf::Packet& operator >> (sf::Packet& packet, Message& message)
