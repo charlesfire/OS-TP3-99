@@ -12,7 +12,7 @@ namespace JC9
             Deck();
             Deck(const Deck& other) = delete;
             ~Deck() = default;
-            Card PickACard();
+            Card& PickACard();
             void Shuffle();
             unsigned int RemainingCards()const;
         private:

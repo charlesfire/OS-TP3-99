@@ -16,7 +16,7 @@ Deck::Deck() : drawnCards(), remainingCards()
     Shuffle();
 }
 
-Card Deck::PickACard()
+Card& Deck::PickACard()
 {
     drawnCards.push_back(remainingCards.back());
     remainingCards.pop_back();
