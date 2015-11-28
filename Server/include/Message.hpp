@@ -9,7 +9,7 @@ namespace JC9
     class Message final
     {
         public:
-            enum Type : sf::Uint16 {};
+            enum Type : sf::Uint8 {};
 
             Message() = default;
             Message(Type type, const std::string& message);
