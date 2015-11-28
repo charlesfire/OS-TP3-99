@@ -8,7 +8,7 @@ namespace JC9
     class Card final
     {
         public:
-            enum Type : sf::Uint8 { Diamond, Heart, Club, Spade};
+            enum Type : sf::Uint8 { Diamond, Heart, Club, Spade, Count};
 
             Card();
             Card(Type type, sf::Uint8 number);

@@ -3,7 +3,7 @@
 
 using namespace JC9;
 
-Card::Card() : number(std::numeric_limits<sf::Uint8>::max()), type(Card::Type::Spade)
+Card::Card() : number(std::numeric_limits<sf::Uint8>::max()), type(Card::Type::Count)
 {
 
 }
