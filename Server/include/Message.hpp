@@ -9,7 +9,7 @@ namespace JC9
     class Message final
     {
         public:
-            enum Type : sf::Uint8 {};
+            enum Type : sf::Uint8 {Connection, ConnectionSucceeded, ConnectionFailed, CardSelected, CardPlayed, GameFinished, Leaderboard, InvalidCard, YourTurn};
 
             Message() = default;
             Message(Type type, const std::string& message);
