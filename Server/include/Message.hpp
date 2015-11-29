@@ -24,8 +24,8 @@ namespace JC9
     };
 }
 
-sf::Packet& operator << (sf::Packet& packet, const JC9::Message& message);
+sf::Packet& operator<<(sf::Packet& packet, const JC9::Message& message);
 
-sf::Packet& operator >> (sf::Packet& packet, JC9::Message& message);
+sf::Packet& operator>>(sf::Packet& packet, JC9::Message& message);
 
 #endif // MESSAGE_HPP

@@ -1,8 +1,11 @@
 #ifndef ROOM_HPP
 #define ROOM_HPP
 
-#include <vector>
+#include <map>
+#include <utility>
 #include <SFML/Network/SocketSelector.hpp>
+#include "Game.hpp"
+#include "Player.hpp"
 
 namespace sf
 {
@@ -21,8 +24,9 @@ namespace JC9
             void PlayGame();
             unsigned int GetClientCount()const;
         private:
+            std::map<Player*, sf::TcpSocket*> clients;
+            Game game;
             sf::SocketSelector selector;
-            std::vector<sf::TcpSocket*> clients;
     };
 }
 

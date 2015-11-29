@@ -18,7 +18,19 @@ Card::Card(const Card& other) : number(other.number), type(other.type)
 
 }
 
-sf::Uint8 Card::GetNumber() const
+Card& Card::operator=(Card other)
+{
+    number = other.number;
+    type = other.type;
+    return *this;
+}
+
+bool Card::operator==(const JC9::Card& other)const
+{
+    return (other.GetNumber() == number && other.GetType() == type);
+}
+
+sf::Uint8 Card::GetNumber()const
 {
     return number;
 }
@@ -33,22 +45,17 @@ void Card::SetNumber(sf::Uint8 number)
     this->number = number;
 }
 
-Card::Type Card::GetType() const
+Card::Type Card::GetType()const
 {
     return type;
 }
 
-inline bool operator == (const JC9::Card& left, const JC9::Card& right)
-{
-    return (left.GetNumber() == right.GetNumber() && left.GetType() == right.GetType());
-}
-
-sf::Packet& operator << (sf::Packet& packet, const JC9::Card& card)
+sf::Packet& operator<<(sf::Packet& packet, const JC9::Card& card)
 {
     return packet << static_cast<sf::Uint8>(card.GetType()) << card.GetNumber();
 }
 
-sf::Packet& operator >> (sf::Packet& packet, JC9::Card& card)
+sf::Packet& operator>>(sf::Packet& packet, JC9::Card& card)
 {
     sf::Uint8 type;
     sf::Uint8 number;

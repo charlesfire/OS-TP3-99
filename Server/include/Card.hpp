@@ -14,6 +14,8 @@ namespace JC9
             Card(Type type, sf::Uint8 number);
             Card(const Card& other);
             ~Card() = default;
+            Card& operator=(Card other);
+            bool operator==(const JC9::Card& other)const;
             sf::Uint8 GetNumber()const;
             Type GetType()const;
             void SetNumber(sf::Uint8 number);
@@ -24,10 +26,8 @@ namespace JC9
     };
 }
 
-inline bool operator == (const JC9::Card& left, const JC9::Card& right);
+sf::Packet& operator<<(sf::Packet& packet, const JC9::Card& card);
 
-sf::Packet& operator << (sf::Packet& packet, const JC9::Card& card);
-
-sf::Packet& operator >> (sf::Packet& packet, JC9::Card& card);
+sf::Packet& operator>>(sf::Packet& packet, JC9::Card& card);
 
 #endif // CARD_HPP

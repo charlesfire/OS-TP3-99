@@ -1,25 +1,25 @@
 #ifndef GAME_HPP
 #define GAME_HPP
 
+#include <vector>
 #include "Deck.hpp"
+#include "Player.hpp"
 
 namespace JC9
 {
-    class Game
+    class Game final
     {
         public:
             Game();
-            ~Game() = default;
+            ~Game();
+            Player* AddPlayer();
             bool CanPlayCard(const Card& card)const;
-            unsigned int GetPlayingPlayer()const;
+            Player* GetPlayingPlayer()const;
             unsigned int GetTotal()const;
-            Card& PlayACard(const Card& card);
+            bool PlayACard(const Card& card);
         private:
-            enum PlayingOrder {Clockwise = 1, CounterClockwise = -1};
-
             Deck deck;
-            PlayingOrder playingOrder;
-            unsigned int playingPlayer;
+            std::vector<Player> players;
             unsigned int total;
     };
 }

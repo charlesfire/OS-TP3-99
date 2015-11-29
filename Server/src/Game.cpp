@@ -1,10 +1,25 @@
 #include "Game.hpp"
+#include <algorithm>
 
 using namespace JC9;
 
-Game::Game() : deck(), playingOrder(PlayingOrder::Clockwise), playingPlayer(0), total(0)
+Game::Game() : deck(), players(), total(0)
 {
     //ctor
+}
+
+Game::~Game()
+{
+    players.clear();
+}
+
+Player* Game::AddPlayer()
+{
+    Player player;
+    for (unsigned int i(0); i < 3; i++)
+        player.AddCard(deck.PickACard());
+    players.push_back(player);
+    return &players.back();
 }
 
 bool Game::CanPlayCard(const Card& card)const
@@ -26,18 +41,20 @@ bool Game::CanPlayCard(const Card& card)const
     }
 }
 
-unsigned int Game::GetPlayingPlayer()const
-{
-    return playingPlayer;
-}
-
 unsigned int Game::GetTotal()const
 {
     return total;
 }
 
-Card& Game::PlayACard(const Card& card)
+bool Game::PlayACard(const Card& card)
 {
+    if (players.front().HasCard(card))
+        players.front().RemoveCard(card);
+    else
+        return false;
+
+    players.front().AddCard(deck.PickACard());
+
     switch (card.GetNumber())
     {
         case 1:
@@ -45,25 +62,33 @@ Card& Game::PlayACard(const Card& card)
                 total += 11;
             else
                 total += 1;
+            break;
         case 10:
             if (total + 10 > 99)
                 total -= 10;
             else
                 total += 10;
+            break;
         case 11:
-            playingOrder = static_cast<PlayingOrder>(-playingOrder);
+            players.push_back(players.front());
+            players.erase(players.begin());
+            std::reverse(players.begin(), players.end());
         case 12:
             total += 10;
+            break;
         case 13:
             total = 99;
+            break;
         default:
             total += card.GetNumber();
             break;
     }
 
-    playingPlayer = (playingPlayer + playingOrder) % 4;
+    players.push_back(players.front());
+    players.erase(players.begin());
 
     if (deck.RemainingCards() == 0)
         deck.Shuffle();
-    return deck.PickACard();
+
+    return true;
 }

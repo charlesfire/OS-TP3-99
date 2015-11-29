@@ -28,12 +28,12 @@ void Message::SetMessage(const std::string& message)
 }
 
 
-sf::Packet& operator << (sf::Packet& packet, const Message& message)
+sf::Packet& operator<<(sf::Packet& packet, const Message& message)
 {
     return packet << static_cast<sf::Uint16>(message.GetType()) << message.GetMessage();
 }
 
-sf::Packet& operator >> (sf::Packet& packet, Message& message)
+sf::Packet& operator>>(sf::Packet& packet, Message& message)
 {
     sf::Uint16 type;
     std::string strMessage;
