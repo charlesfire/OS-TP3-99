@@ -1,8 +1,14 @@
 #include "Room.hpp"
+#include <SFML/Network/Packet.hpp>
 #include <SFML/Network/TcpSocket.hpp>
 #include "MessageType.hpp"
 
 using namespace JC9;
+
+Room::Room() : clients(), game(), selector()
+{
+
+}
 
 Room::~Room()
 {
@@ -17,7 +23,18 @@ Room::~Room()
 
 void Room::AddClient(sf::TcpSocket* client)
 {
-    clients.emplace(game.AddPlayer(), client);
+    Player* player = game.AddPlayer();
+
+    auto cards = player->GetCards();
+    sf::Packet packet;
+    for (auto card : cards)
+    {
+        packet << MessageType::CardPicked << card;
+        client->send(packet);
+        packet.clear();
+    }
+
+    clients.emplace(player, client);
 }
 
 bool Room::IsPlaying()const
@@ -48,8 +65,48 @@ void Room::PlayGame()
                 switch (type)
                 {
                     case MessageType::CardSelected:
+                    {
+                        Card selectedCard;
+                        packet >> selectedCard;
+                        if (client.first == game.GetPlayingPlayer())
+                        {
+                            sf::Packet response;
+                            if (game.CanPlayCard(selectedCard) && game.PlayCard(selectedCard))
+                            {
+                                response << MessageType::CardPlayed << selectedCard << game.GetTotal();
+                                for (auto otherClient : clients)
+                                {
+                                    otherClient.second->send(response);
+                                }
 
-                        break;
+                                response.clear();
+                                const Player* nextPlayer = game.GetPlayingPlayer();
+                                if (game.CanPlay(nextPlayer))
+                                {
+                                    response << MessageType::YourTurn;
+                                    clients[nextPlayer]->send(response);
+                                }
+                                else
+                                {
+                                    for (auto otherClient : clients)
+                                    {
+                                        response << MessageType::GameFinished;
+                                        if (otherClient.first != nextPlayer)
+                                            response << "V";
+                                        else
+                                            response << "D";
+                                        otherClient.second->send(response);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                packet << MessageType::InvalidCard;
+                                client.second->send(packet);
+                            }
+                        }
+                    }
+                    break;
                     default:
                         break;
                 }

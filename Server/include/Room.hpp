@@ -17,14 +17,14 @@ namespace JC9
     class Room final
     {
         public:
-            Room() = default;
-            virtual ~Room();
+            Room();
+            ~Room();
             void AddClient(sf::TcpSocket* client);
             bool IsPlaying()const;
             void PlayGame();
             unsigned int GetClientCount()const;
         private:
-            std::map<Player*, sf::TcpSocket*> clients;
+            std::map<const Player*, sf::TcpSocket*> clients;
             Game game;
             sf::SocketSelector selector;
     };

@@ -12,6 +12,7 @@ namespace JC9
             Player() = default;
             ~Player() = default;
             void AddCard(const Card& card);
+            const std::vector<Card>& GetCards()const;
             bool HasCard(const Card& card)const;
             void RemoveCard(const Card& card);
         private:

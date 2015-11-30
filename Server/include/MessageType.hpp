@@ -5,7 +5,7 @@
 
 namespace JC9
 {
-    enum MessageType : sf::Uint8 {Connection, ConnectionSucceeded, ConnectionFailed, CardSelected, CardPlayed, GameFinished, Leaderboard, InvalidCard, YourTurn};
+    enum MessageType : sf::Uint8 {Connection, ConnectionSucceeded, ConnectionFailed, CardPicked, CardSelected, CardPlayed, GameFinished, Leaderboard, InvalidCard, YourTurn};
 }
 
 sf::Packet& operator<<(sf::Packet& packet, const JC9::MessageType& type);

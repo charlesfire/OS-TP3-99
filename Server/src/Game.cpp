@@ -22,6 +22,17 @@ Player* Game::AddPlayer()
     return &players.back();
 }
 
+bool Game::CanPlay(const Player* player)const
+{
+    auto cards = player->GetCards();
+    for (auto card : cards)
+    {
+        if (CanPlayCard(card))
+            return true;
+    }
+    return false;
+}
+
 bool Game::CanPlayCard(const Card& card)const
 {
     switch (card.GetNumber())
@@ -41,12 +52,17 @@ bool Game::CanPlayCard(const Card& card)const
     }
 }
 
+const Player* Game::GetPlayingPlayer()const
+{
+    return &players.front();
+}
+
 unsigned int Game::GetTotal()const
 {
     return total;
 }
 
-bool Game::PlayACard(const Card& card)
+bool Game::PlayCard(const Card& card)
 {
     if (players.front().HasCard(card))
         players.front().RemoveCard(card);

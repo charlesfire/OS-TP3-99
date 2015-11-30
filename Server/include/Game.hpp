@@ -13,10 +13,11 @@ namespace JC9
             Game();
             ~Game();
             Player* AddPlayer();
+            bool CanPlay(const Player* player)const;
             bool CanPlayCard(const Card& card)const;
-            Player* GetPlayingPlayer()const;
+            const Player* GetPlayingPlayer()const;
             unsigned int GetTotal()const;
-            bool PlayACard(const Card& card);
+            bool PlayCard(const Card& card);
         private:
             Deck deck;
             std::vector<Player> players;
