@@ -1,7 +1,9 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
+#include <future>
 #include <thread>
+#include <tuple>
 #include <vector>
 #include <SFML/Network/TcpListener.hpp>
 
@@ -17,8 +19,7 @@ namespace JC9
             void Run();
         private:
             sf::TcpListener listener;
-            std::vector<Room*> rooms;
-            std::vector<std::thread> playingRooms;
+            std::vector<std::tuple<std::future<void>, std::thread, Room*>> rooms;
     };
 }
 
