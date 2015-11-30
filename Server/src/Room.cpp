@@ -1,6 +1,6 @@
 #include "Room.hpp"
 #include <SFML/Network/TcpSocket.hpp>
-#include "Message.hpp"
+#include "MessageType.hpp"
 
 using namespace JC9;
 
@@ -42,12 +42,12 @@ void Room::PlayGame()
                     // TODO : disconnect player;
                 }
 
-                Message message;
-                packet >> message;
+                MessageType type;
+                packet >> type;
 
-                switch (message.GetType())
+                switch (type)
                 {
-                    case Message::Type::CardSelected:
+                    case MessageType::CardSelected:
 
                         break;
                     default:

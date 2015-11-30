@@ -17,7 +17,10 @@ void Server::Run()
 {
     while (true)
     {
-        sf::TcpSocket* client = new sf::TcpSocket();
-
+        Room* room = new Room();
+        while (room->GetClientCount() < 4)
+        {
+            sf::TcpSocket* client = new sf::TcpSocket();
+        }
     }
 }
