@@ -1,6 +1,6 @@
 #pragma once
 #include <SFML/Network.hpp>
-#include "Message.hpp"
+#include "Card.hpp"
 #include "Constant.h"
 
 namespace JC9
@@ -9,16 +9,16 @@ namespace JC9
 	{
 	private:
 		bool canPlay = false;
-		int totalOnGame = 0;
-		Message message;
+		Card* lastPlayed;
+		sf::Int16 totalOnGame = 0;
 		sf::TcpSocket host;
 		sf::TcpSocket::Status status = sf::Socket::Done;
 
-		sf::Packet packet;
-		std::string cartesEnMain[NB_CARTES];
+		Card* cartesEnMain[NB_CARTES];
 
-		void ReactToTransaction(int number);
-		void AskForCard();
+		void ReactToTransaction(sf::Packet& packet);
+		void AskForCard(sf::Packet& packet);
+		std::string ConvertToString(sf::Uint8 type);
 
 	public:
 		Game();
