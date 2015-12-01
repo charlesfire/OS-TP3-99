@@ -1,5 +1,6 @@
 #include "Game.hpp"
 #include <algorithm>
+#include "Player.hpp"
 
 using namespace JC9;
 
@@ -10,16 +11,18 @@ Game::Game() : deck(), players(), total(0)
 
 Game::~Game()
 {
+    for (auto player : players)
+        delete player;
     players.clear();
 }
 
 Player* Game::AddPlayer()
 {
-    Player player;
+    Player* player = new Player();
     for (unsigned int i(0); i < 3; i++)
-        player.AddCard(deck.PickACard());
+        player->AddCard(deck.PickACard());
     players.push_back(player);
-    return &players.back();
+    return players.back();
 }
 
 bool Game::CanPlay(const Player* player)const
@@ -54,23 +57,26 @@ bool Game::CanPlayCard(const Card& card)const
 
 const Player* Game::GetPlayingPlayer()const
 {
-    return &players.front();
+    return players.front();
 }
 
-unsigned int Game::GetTotal()const
+sf::Int16 Game::GetTotal()const
 {
     return total;
 }
 
-bool Game::PlayCard(const Card& card)
+Card Game::PickCard(const Player* player)
 {
-    if (players.front().HasCard(card))
-        players.front().RemoveCard(card);
-    else
-        return false;
+    if (deck.RemainingCards() == 0)
+        deck.Shuffle();
+    Card card = deck.PickACard();
+    const_cast<Player*>(player)->AddCard(card);
 
-    players.front().AddCard(deck.PickACard());
+    return card;
+}
 
+void Game::PlayCard(const Card& card)
+{
     switch (card.GetNumber())
     {
         case 1:
@@ -102,9 +108,4 @@ bool Game::PlayCard(const Card& card)
 
     players.push_back(players.front());
     players.erase(players.begin());
-
-    if (deck.RemainingCards() == 0)
-        deck.Shuffle();
-
-    return true;
 }

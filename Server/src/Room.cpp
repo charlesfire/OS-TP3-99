@@ -1,4 +1,5 @@
 #include "Room.hpp"
+#include <iostream>
 #include <SFML/Network/Packet.hpp>
 #include <SFML/Network/TcpSocket.hpp>
 #include "MessageType.hpp"
@@ -29,11 +30,13 @@ void Room::AddClient(sf::TcpSocket* client)
     sf::Packet packet;
     for (auto card : cards)
     {
+        std::cout << "Card sended : " << (int)card.GetType() << (int)card.GetNumber() << std::endl;
         packet << MessageType::CardPicked << card;
         client->send(packet);
         packet.clear();
     }
 
+    selector.add(*client);
     clients.emplace(player, client);
 }
 
@@ -44,6 +47,12 @@ bool Room::IsPlaying()const
 
 void Room::PlayGame()
 {
+    {
+        sf::Packet pack;
+        pack << MessageType::YourTurn;
+        clients[game.GetPlayingPlayer()]->send(pack);
+    }
+
     while (game.GetTotal() < 100)
     {
         selector.wait();
@@ -66,13 +75,22 @@ void Room::PlayGame()
                 {
                     case MessageType::CardSelected:
                     {
+                        std::cout << "A card has been selected" << std::endl;
                         Card selectedCard;
                         packet >> selectedCard;
                         if (client.first == game.GetPlayingPlayer())
                         {
+                            std::cout << "It's the good player" << std::endl;
                             sf::Packet response;
-                            if (game.CanPlayCard(selectedCard) && game.PlayCard(selectedCard))
+                            if (client.first->HasCard(selectedCard) && game.CanPlayCard(selectedCard))
                             {
+                                game.PlayCard(selectedCard);
+                                Card pickedCard = game.PickCard(client.first);
+                                response << MessageType::CardPicked << pickedCard;
+                                client.second->send(response);
+
+                                std::cout << "Card played : " << (int)selectedCard.GetNumber() << (int)selectedCard.GetType() << std::endl;
+                                response.clear();
                                 response << MessageType::CardPlayed << selectedCard << game.GetTotal();
                                 for (auto otherClient : clients)
                                 {
@@ -83,6 +101,7 @@ void Room::PlayGame()
                                 const Player* nextPlayer = game.GetPlayingPlayer();
                                 if (game.CanPlay(nextPlayer))
                                 {
+                                    std::cout << "Next player" << std::endl;
                                     response << MessageType::YourTurn;
                                     clients[nextPlayer]->send(response);
                                 }
@@ -90,6 +109,7 @@ void Room::PlayGame()
                                 {
                                     for (auto otherClient : clients)
                                     {
+                                        std::cout << "Game finished" << std::endl;
                                         response << MessageType::GameFinished;
                                         if (otherClient.first != nextPlayer)
                                             response << "V";

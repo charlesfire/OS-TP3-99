@@ -19,7 +19,7 @@ namespace JC9
             void Run();
         private:
             sf::TcpListener listener;
-            std::vector<std::tuple<std::future<void>, std::thread, Room*>> rooms;
+            std::vector<std::tuple<std::thread, Room*>> rooms;
     };
 }
 
