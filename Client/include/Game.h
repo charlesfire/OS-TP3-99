@@ -9,15 +9,15 @@ namespace JC9
 	{
 	private:
 		bool canPlay = false;
-		sf::Uint8 totalOnGame = 0;
+		Card* lastPlayed;
+		sf::Int16 totalOnGame = 0;
 		sf::TcpSocket host;
 		sf::TcpSocket::Status status = sf::Socket::Done;
 
-		sf::Packet packet;
 		Card* cartesEnMain[NB_CARTES];
 
-		void ReactToTransaction();
-		void AskForCard();
+		void ReactToTransaction(sf::Packet& packet);
+		void AskForCard(sf::Packet& packet);
 		std::string ConvertToString(sf::Uint8 type);
 
 	public:
