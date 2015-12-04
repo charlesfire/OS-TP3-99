@@ -3,10 +3,12 @@
 #include <string>
 #include "MessageType.hpp"
 
+
 using namespace JC9;
 
 Game::Game()
 {
+	mainWin = new sf::RenderWindow(sf::VideoMode(1280, 720, 32), "Jeu de carte 99");
 	canPlay = false;
 	gameIsOver = false;
 	totalOnGame = 0;
@@ -26,6 +28,7 @@ Game::~Game()
 		delete cartesEnMain[i];
 	}
 	delete lastPlayed;
+	delete mainWin;
 }
 
 void Game::Run()
@@ -33,22 +36,23 @@ void Game::Run()
 	std::string user;
 	std::string password;
 	sf::TcpSocket::Status status = host.connect("10.17.59.194", 6666);
+
 	/*std::cout << "Veuillez entrer votre nom  d'utilisateur: " << std::endl;
 	std::cin >> user;
 	std::cout << "Veuillez entrer votre mot de passe: " << std::endl;
 	std::cin >> password;*/
-
-
 	while (true)
 	{
 		if (status != sf::TcpSocket::Status::Done)
 		{
 			break;
 		}
-		system("cls");
-		sf::Packet packet;
-		packet.clear();
+
+		
+		CryptedPacket packet;
 		status = host.receive(packet);
+		system("cls");
+
 		ReactToTransaction(packet);
 		if (canPlay)
 		{
@@ -63,7 +67,7 @@ void Game::Run()
 	}
 	host.disconnect();
 }
-void Game::AskForCard(sf::Packet& packet)
+void Game::AskForCard(CryptedPacket& packet)
 {
 	
 	std::cout << "Le total des cartes au centre: " << static_cast<int>(totalOnGame) << std::endl;
@@ -93,7 +97,7 @@ void Game::AskForCard(sf::Packet& packet)
 			std::cout << "Vous avez entré un mauvais numéro, veuillez réessayer." << std::endl;
 		}
 	}
-	sf::Packet response;
+	CryptedPacket response;
 	response << MessageType::CardSelected;
 	response << *cartesEnMain[numCarte - 1];
 	//Puis on envoie une transaction au serveur.
@@ -132,7 +136,7 @@ std::string Game::ConvertToString(sf::Uint8 type)
 		return "trèfles";
 	}
 }
-void Game::ReactToTransaction(sf::Packet& packet)
+void Game::ReactToTransaction(CryptedPacket& packet)
 {
 	MessageType type;
 	packet >> type;
@@ -152,6 +156,7 @@ void Game::ReactToTransaction(sf::Packet& packet)
 				
 				Card carte;
 				packet >> carte;
+				std::cout << "Vous avez reçu le " << static_cast<int>(carte.GetNumber()) << " de " << ConvertToString(carte.GetType()) << std::endl;
 				cartesEnMain[i] = new Card(carte);
 				break;
 
@@ -205,6 +210,10 @@ void Game::ReactToTransaction(sf::Packet& packet)
 		std::cout << "Veuillez sélectionner une carte valide!" << std::endl;
 	}
 	default:
+	{
+		std::cout << "Type inconnu!" << std::endl;
+		std::cout << std::endl;
 		break;
+	}
 	}
 }
