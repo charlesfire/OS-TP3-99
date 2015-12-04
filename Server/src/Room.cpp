@@ -78,10 +78,10 @@ void Room::PlayGame()
                         std::cout << "A card has been selected" << std::endl;
                         Card selectedCard;
                         packet >> selectedCard;
+                        sf::Packet response;
                         if (client.first == game.GetPlayingPlayer())
                         {
                             std::cout << "It's the good player" << std::endl;
-                            sf::Packet response;
                             if (client.first->HasCard(selectedCard) && game.CanPlayCard(selectedCard))
                             {
                                 game.PlayCard(selectedCard);
@@ -121,8 +121,9 @@ void Room::PlayGame()
                             }
                             else
                             {
-                                packet << MessageType::InvalidCard;
-                                client.second->send(packet);
+
+                                response << MessageType::InvalidCard;
+                                client.second->send(response);
                             }
                         }
                     }

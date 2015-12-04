@@ -27,8 +27,7 @@ Player* Game::AddPlayer()
 
 bool Game::CanPlay(const Player* player)const
 {
-    auto cards = player->GetCards();
-    for (auto card : cards)
+    for (auto card : player->GetCards())
     {
         if (CanPlayCard(card))
             return true;
@@ -42,16 +41,25 @@ bool Game::CanPlayCard(const Card& card)const
     {
         case 1:
             return total + 1 < 99;
+            break;
+        case 9:
+            return true;
+            break;
         case 10:
             return true;
+            break;
         case 11:
             return true;
+            break;
         case 12:
             return total + 10 < 99;
+            break;
         case 13:
             return true;
+            break;
         default:
             return total + card.GetNumber() < 99;
+            break;
     }
 }
 
@@ -85,6 +93,8 @@ void Game::PlayCard(const Card& card)
             else
                 total += 1;
             break;
+        case 9:
+            break;
         case 10:
             if (total + 10 > 99)
                 total -= 10;
@@ -95,6 +105,7 @@ void Game::PlayCard(const Card& card)
             players.push_back(players.front());
             players.erase(players.begin());
             std::reverse(players.begin(), players.end());
+            break;
         case 12:
             total += 10;
             break;
