@@ -78,6 +78,7 @@ Card Game::PickCard(const Player* player)
 
 void Game::PlayCard(const Card& card)
 {
+    players.front()->RemoveCard(card);
     switch (card.GetNumber())
     {
         case 1:

@@ -91,10 +91,10 @@ void Room::PlayGame()
                                 client.second->send(response);
 
                                 std::cout << "Card played : " << (int)selectedCard.GetNumber() << (int)selectedCard.GetType() << std::endl;
-                                response.clear();
-                                response << MessageType::CardPlayed << selectedCard << game.GetTotal();
                                 for (auto otherClient : clients)
                                 {
+                                    response.clear();
+                                    response << MessageType::CardPlayed << selectedCard << game.GetTotal();
                                     otherClient.second->send(response);
                                 }
 
@@ -111,6 +111,7 @@ void Room::PlayGame()
                                     for (auto otherClient : clients)
                                     {
                                         std::cout << "Game finished" << std::endl;
+                                        response.clear();
                                         response << MessageType::GameFinished;
                                         if (otherClient.first != nextPlayer)
                                             response << "V";

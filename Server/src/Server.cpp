@@ -36,7 +36,7 @@ void Server::Run()
 
         std::cout << "New room created" << std::endl;
         Room* room = new Room();
-        while (room->GetClientCount() < 1)
+        while (room->GetClientCount() < 3)
         {
             sf::TcpSocket* client = new sf::TcpSocket();
             if (listener.accept(*client) != sf::Socket::Status::Done)
@@ -53,7 +53,7 @@ void Server::Run()
         }
 
         std::cout << "Game started" << std::endl;
-        std::packaged_task<void()> task(std::bind(Room::PlayGame, room));
+        std::packaged_task<void()> task(std::bind(&Room::PlayGame, room));
         rooms.push_back(std::make_tuple(std::thread(std::move(task)), room));
     }
 }
