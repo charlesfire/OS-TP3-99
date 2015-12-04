@@ -9,6 +9,7 @@ namespace JC9
 	{
 	private:
 		bool canPlay = false;
+		bool gameIsOver = false;
 		Card* lastPlayed;
 		sf::Int16 totalOnGame = 0;
 		sf::TcpSocket host;

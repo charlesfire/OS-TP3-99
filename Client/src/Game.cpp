@@ -8,6 +8,7 @@ using namespace JC9;
 Game::Game()
 {
 	canPlay = false;
+	gameIsOver = false;
 	totalOnGame = 0;
 	host.setBlocking(true);
 	lastPlayed = nullptr;
@@ -29,8 +30,14 @@ Game::~Game()
 
 void Game::Run()
 {
-
+	std::string user;
+	std::string password;
 	sf::TcpSocket::Status status = host.connect("10.17.59.194", 6666);
+	/*std::cout << "Veuillez entrer votre nom  d'utilisateur: " << std::endl;
+	std::cin >> user;
+	std::cout << "Veuillez entrer votre mot de passe: " << std::endl;
+	std::cin >> password;*/
+
 
 	while (true)
 	{
@@ -40,11 +47,17 @@ void Game::Run()
 		}
 		system("cls");
 		sf::Packet packet;
+		packet.clear();
 		status = host.receive(packet);
 		ReactToTransaction(packet);
 		if (canPlay)
 		{
 			AskForCard(packet);
+		}
+		if (gameIsOver)
+		{
+			system("Pause");
+			break;
 		}
 		
 	}
@@ -90,8 +103,9 @@ void Game::AskForCard(sf::Packet& packet)
 	{
 		//On enlève la carte des mains du joueur.
 		delete lastPlayed;
-		lastPlayed = cartesEnMain[numCarte - 1];
+		
 	}
+	lastPlayed = cartesEnMain[numCarte - 1];
 	cartesEnMain[numCarte - 1] = nullptr;
 	//Ensuite ce n'est plus à son tour et il doit attendre l'autorisation du serveur pour jouer à nouveau.
 	canPlay = false;
@@ -148,6 +162,7 @@ void Game::ReactToTransaction(sf::Packet& packet)
 	case MessageType::GameFinished:
 	{
 		std::string message = "";
+		gameIsOver = true;
 		packet >> message;
 		if (message == "V")
 		{
@@ -179,6 +194,14 @@ void Game::ReactToTransaction(sf::Packet& packet)
 	case MessageType::InvalidCard:
 	{
 		canPlay = true;
+		for (int i = 0; i < NB_CARTES; i++)
+		{
+			if (cartesEnMain[i] == nullptr)
+			{
+				cartesEnMain[i] = lastPlayed;
+				break;
+			}
+		}
 		std::cout << "Veuillez sélectionner une carte valide!" << std::endl;
 	}
 	default:
