@@ -5,6 +5,7 @@ using namespace JC9;
 const void* CryptedPacket::onSend(std::size_t& size)
 {
     sf::Uint8* data = static_cast<sf::Uint8*>(const_cast<void*>(getData()));
+    size = getDataSize();
     for (unsigned int i(0); i < size; i++)
     {
         sf::Uint8 total = 0;
