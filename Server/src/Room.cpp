@@ -118,6 +118,9 @@ void Room::PlayGame()
                                             response << "D";
                                         otherClient.second->send(response);
                                     }
+
+                                    // TODO : Send leaderboard
+                                    return;
                                 }
                             }
                             else

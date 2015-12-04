@@ -40,26 +40,19 @@ bool Game::CanPlayCard(const Card& card)const
     switch (card.GetNumber())
     {
         case 1:
-            return total + 1 < 99;
-            break;
+            return total + 1 <= 99;
         case 9:
             return true;
-            break;
         case 10:
             return true;
-            break;
         case 11:
             return true;
-            break;
         case 12:
-            return total + 10 < 99;
-            break;
+            return total + 10 <= 99;
         case 13:
             return true;
-            break;
         default:
-            return total + card.GetNumber() < 99;
-            break;
+            return total + card.GetNumber() <= 99;
     }
 }
 
