@@ -2,6 +2,7 @@
 #include <iostream>
 #include <SFML/Network/Packet.hpp>
 #include <SFML/Network/TcpSocket.hpp>
+#include "CryptedPacket.hpp"
 #include "MessageType.hpp"
 
 using namespace JC9;
@@ -27,7 +28,7 @@ void Room::AddClient(sf::TcpSocket* client)
     Player* player = game.AddPlayer();
 
     auto cards = player->GetCards();
-    sf::Packet packet;
+    CryptedPacket packet;
     for (auto card : cards)
     {
         std::cout << "Card sended : " << (int)card.GetType() << (int)card.GetNumber() << std::endl;
@@ -48,7 +49,7 @@ bool Room::IsPlaying()const
 void Room::PlayGame()
 {
     {
-        sf::Packet pack;
+        CryptedPacket pack;
         pack << MessageType::YourTurn;
         clients[game.GetPlayingPlayer()]->send(pack);
     }
@@ -60,7 +61,7 @@ void Room::PlayGame()
         {
             if (selector.isReady(*client.second))
             {
-                sf::Packet packet;
+                CryptedPacket packet;
                 auto status = client.second->receive(packet);
 
                 if (status != sf::Socket::Status::Done)
@@ -78,7 +79,7 @@ void Room::PlayGame()
                         std::cout << "A card has been selected" << std::endl;
                         Card selectedCard;
                         packet >> selectedCard;
-                        sf::Packet response;
+                        CryptedPacket response;
                         if (client.first == game.GetPlayingPlayer())
                         {
                             std::cout << "It's the good player" << std::endl;

@@ -4,7 +4,7 @@ using namespace JC9;
 
 const void* CryptedPacket::onSend(std::size_t& size)
 {
-    sf::Uint8* data = reinterpret_cast<sf::Uint8*>(const_cast<void*>(getData()));
+    sf::Uint8* data = static_cast<sf::Uint8*>(const_cast<void*>(getData()));
     for (unsigned int i(0); i < size; i++)
     {
         sf::Uint8 total = 0;
@@ -26,7 +26,7 @@ const void* CryptedPacket::onSend(std::size_t& size)
 
 void CryptedPacket::onReceive(const void* data, std::size_t size)
 {
-    sf::Uint8* decryptedData = reinterpret_cast<sf::Uint8*>(const_cast<void*>(data));
+    sf::Uint8* decryptedData = static_cast<sf::Uint8*>(const_cast<void*>(data));
     for (unsigned int i(0); i < size; i++)
     {
         sf::Uint8 total = 0;
