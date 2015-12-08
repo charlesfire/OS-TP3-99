@@ -20,6 +20,7 @@ namespace JC9
             sf::Int16 GetTotal()const;
             Card PickCard(const Player* player);
             void PlayCard(const Card& card);
+            void RemovePlayer(const Player* player);
         private:
             Deck deck;
             std::vector<Player*> players;

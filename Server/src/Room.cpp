@@ -64,9 +64,9 @@ void Room::PlayGame()
                 CryptedPacket packet;
                 auto status = client.second->receive(packet);
 
-                if (status != sf::Socket::Status::Done)
+                if (status == sf::Socket::Status::Disconnected || sf::Socket::Status::Error)
                 {
-                    // TODO : disconnect player;
+                    // TODO : disconnect player
                 }
 
                 MessageType type;

@@ -18,7 +18,7 @@ Game::~Game()
 
 Player* Game::AddPlayer()
 {
-    Player* player = new Player();
+    Player* player = new Player("");
     for (unsigned int i(0); i < 3; i++)
         player->AddCard(deck.PickACard());
     players.push_back(player);
@@ -113,4 +113,14 @@ void Game::PlayCard(const Card& card)
 
     players.push_back(players.front());
     players.erase(players.begin());
+}
+
+void Game::RemovePlayer(const Player* player)
+{
+    auto it = std::find(players.begin(), players.end(), player);
+    if (it != players.end())
+    {
+        players.erase(it);
+        delete *it;
+    }
 }

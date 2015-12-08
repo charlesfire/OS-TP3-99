@@ -3,6 +3,11 @@
 
 using namespace JC9;
 
+Player::Player(const std::string& username) : cards(), username(username)
+{
+
+}
+
 void Player::AddCard(const Card& card)
 {
     cards.push_back(card);

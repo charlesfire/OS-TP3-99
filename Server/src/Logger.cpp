@@ -1,11 +1,13 @@
 #include "Logger.hpp"
 
-Logger::Logger()
+using namespace JC9;
+
+void Logger::Log(const std::string& message)
 {
-    //ctor
+    (*out) << message;
 }
 
-Logger::~Logger()
+void Logger::SetOutput(std::ostream& out)
 {
-    //dtor
+    this->out = &out;
 }

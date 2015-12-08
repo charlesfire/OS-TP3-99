@@ -2,13 +2,16 @@
 #include <iostream>
 #include <chrono>
 #include <SFML/Network/TcpSocket.hpp>
+#include "CryptedPacket.hpp"
+#include "MessageType.hpp"
 #include "Room.hpp"
 
 using namespace JC9;
 
-Server::Server() : listener(), rooms()
+Server::Server(const unsigned int port) : listener(), rooms(), selector()
 {
-    listener.listen(6666);
+    listener.listen(port);
+    selector.add(listener);
 }
 
 Server::~Server()
@@ -36,6 +39,51 @@ void Server::Run()
 
         std::cout << "New room created" << std::endl;
         Room* room = new Room();
+        while (selector.wait())
+        {
+            if (selector.isReady(listener))
+            {
+                sf::TcpSocket* connection = new sf::TcpSocket();
+                if (listener.accept(*connection) != sf::Socket::Status::Done)
+                {
+                    std::cout << "Connection error" << std::endl;
+                    connection->disconnect();
+                    delete connection;
+                }
+                else
+                {
+                    connections.push_back(connection);
+                }
+            }
+            else
+                for (auto connection : connections)
+                {
+                    if (selector.isReady(*connection))
+                    {
+                        CryptedPacket packet;
+                        auto status = connection->receive(packet);
+                        if (status == sf::Socket::Status::Disconnected || sf::Socket::Status::Error)
+                        {
+                            // TODO : disconnect player
+                        }
+                        else
+                        {
+                            CryptedPacket response;
+                            MessageType type;
+                            packet >> type;
+                            if (type == MessageType::Connection)
+                            {
+
+                            }
+                            else
+                                response << MessageType::ConnectionFailed;
+
+                            connection->send(response);
+                        }
+                    }
+                }
+        }
+        /*Room* room = new Room();
         while (room->GetClientCount() < 3)
         {
             sf::TcpSocket* client = new sf::TcpSocket();
@@ -50,7 +98,7 @@ void Server::Run()
                 std::cout << "Client added" << std::endl;
                 room->AddClient(client);
             }
-        }
+        }*/
 
         std::cout << "Game started" << std::endl;
         std::packaged_task<void()> task(std::bind(&Room::PlayGame, room));
