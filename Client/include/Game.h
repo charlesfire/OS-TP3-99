@@ -17,7 +17,6 @@ namespace JC9
 		sf::Int16 totalOnGame = 0;
 		sf::TcpSocket host;
 		sf::TcpSocket::Status status = sf::Socket::Done;
-		sf::RenderWindow* mainWin;
 		
 
 		Card* cartesEnMain[NB_CARTES];
