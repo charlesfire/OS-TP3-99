@@ -2,11 +2,12 @@
 #define SERVER_HPP
 
 #include <future>
+#include <unordered_map>
 #include <thread>
-#include <tuple>
 #include <vector>
 #include <SFML/Network/SocketSelector.hpp>
 #include <SFML/Network/TcpListener.hpp>
+#include "sqlite3pp.h"
 
 namespace JC9
 {
@@ -21,8 +22,9 @@ namespace JC9
             void Run();
         private:
             std::vector<sf::TcpSocket*> connections;
+            sqlite3pp::database db;
             sf::TcpListener listener;
-            std::vector<std::tuple<std::thread, Room*>> rooms;
+            std::unordered_map<Room*, std::thread> rooms;
             sf::SocketSelector selector;
     };
 }

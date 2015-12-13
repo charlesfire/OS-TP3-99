@@ -1,7 +1,7 @@
 #ifndef LOGGER_HPP
 #define LOGGER_HPP
 
-#include <iostream>
+#include <fstream>
 #include "Singleton.h"
 
 namespace JC9
@@ -9,17 +9,13 @@ namespace JC9
     class Logger final : public Singleton<Logger>
     {
         public:
+            Logger();
             void Log(const std::string& message);
-            void SetOutput(std::ostream& out = std::cerr);
         private:
-            std::ostream* out;
-    };
-}
+            std::ofstream out;
 
-JC9::Logger& operator<<(JC9::Logger& os, const std::string& message)
-{
-    os.Log(message);
-    return os;
+            std::string GetDate()const;
+    };
 }
 
 #endif // LOGGER_HPP

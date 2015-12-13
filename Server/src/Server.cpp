@@ -1,14 +1,16 @@
 #include "Server.hpp"
-#include <iostream>
+#include <algorithm>
 #include <chrono>
+#include <iostream>
 #include <SFML/Network/TcpSocket.hpp>
 #include "CryptedPacket.hpp"
+#include "Encryptor.hpp"
 #include "MessageType.hpp"
 #include "Room.hpp"
 
 using namespace JC9;
 
-Server::Server(const unsigned int port) : listener(), rooms(), selector()
+Server::Server(const unsigned int port) : connections(), db("TP3.db"), listener(), rooms(), selector()
 {
     listener.listen(port);
     selector.add(listener);
@@ -17,91 +19,119 @@ Server::Server(const unsigned int port) : listener(), rooms(), selector()
 Server::~Server()
 {
     for (auto& room : rooms)
-        delete std::get<1>(room);
-    rooms.clear();
+        delete room.first;
 }
 
 void Server::Run()
 {
+    std::cout << "New room created" << std::endl;
+    Room* room = new Room();
     while (true)
     {
-        /*for (auto it = rooms.begin(); it != rooms.end(); it++)
+        selector.wait();
+        std::vector<sf::TcpSocket*> toRemove;
+        if (selector.isReady(listener))
         {
-            if (std::get<0>(*it).wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+            sf::TcpSocket* connection = new sf::TcpSocket();
+            if (listener.accept(*connection) != sf::Socket::Status::Done)
             {
-                std::cout << "Room closed" << std::endl;
-                delete std::get<2>(*it);
-                rooms.erase(it);
-            }
-        }*/
-
-        // TODO : delete unused threads
-
-        std::cout << "New room created" << std::endl;
-        Room* room = new Room();
-        while (selector.wait())
-        {
-            if (selector.isReady(listener))
-            {
-                sf::TcpSocket* connection = new sf::TcpSocket();
-                if (listener.accept(*connection) != sf::Socket::Status::Done)
-                {
-                    std::cout << "Connection error" << std::endl;
-                    connection->disconnect();
-                    delete connection;
-                }
-                else
-                {
-                    connections.push_back(connection);
-                }
+                std::cout << "Connection error" << std::endl;
+                toRemove.push_back(connection);
             }
             else
-                for (auto connection : connections)
+            {
+                std::cout << "New client" << std::endl;
+                selector.add(*connection);
+                connections.push_back(connection);
+            }
+        }
+        else
+        {
+            for (auto connection : connections)
+            {
+                if (selector.isReady(*connection))
                 {
-                    if (selector.isReady(*connection))
+                    CryptedPacket packet;
+                    auto status = connection->receive(packet);
+                    if (status == sf::Socket::Status::Disconnected || status == sf::Socket::Status::Error)
                     {
-                        CryptedPacket packet;
-                        auto status = connection->receive(packet);
-                        if (status == sf::Socket::Status::Disconnected || sf::Socket::Status::Error)
+                        std::cout << "Client disconnected" << std::endl;
+                        toRemove.push_back(connection);
+                    }
+                    else
+                    {
+                        CryptedPacket response;
+                        MessageType type;
+                        packet >> type;
+                        if (type == MessageType::Connection)
                         {
-                            // TODO : disconnect player
+                            std::string username, password;
+                            packet >> username >> password;
+                            std::cout << username << " : " << password << std::endl;
+                            password = Encryptor::Crypt(password);
+                            std::cout << password << std::endl;
+                            sqlite3pp::query qry(db, "SELECT count(*), Score FROM Players WHERE Username = ? AND Password = ? AND Connected = 0");
+                            qry.bind(1, username.c_str());
+                            qry.bind(2, password.c_str());
+                            sf::Uint16 count, score;
+                            (*qry.begin()).getter() >> count >> score;
+                            if (count)
+                            {
+                                std::cout << "Connection succeeded" << std::endl;
+                                response << MessageType::ConnectionSucceeded;
+                                room->AddClient(connection, username, score);
+                                sqlite3pp::command cmd(db, "UPDATE Players SET Connected = 1 WHERE Username = ?");
+                                cmd.bind(1, username.c_str());
+                                cmd.execute();
+                                toRemove.push_back(connection);
+                                if (room->GetClientCount() == 2)
+                                {
+                                    std::cout << "Game started" << std::endl;
+                                    rooms.emplace(std::make_pair(room, std::thread(std::bind(&Room::PlayGame, room))));
+                                    std::cout << "New room created" << std::endl;
+                                    room = new Room();
+                                }
+                            }
+                            else
+                            {
+                                std::cout << "Connection failed" << std::endl;
+                                response << MessageType::ConnectionFailed;
+                            }
                         }
                         else
                         {
-                            CryptedPacket response;
-                            MessageType type;
-                            packet >> type;
-                            if (type == MessageType::Connection)
-                            {
-
-                            }
-                            else
-                                response << MessageType::ConnectionFailed;
-
-                            connection->send(response);
+                            std::cout << "Connection failed" << std::endl;
+                            response << MessageType::ConnectionFailed;
                         }
+
+                        connection->send(response);
                     }
                 }
+            }
         }
-        /*Room* room = new Room();
-        while (room->GetClientCount() < 3)
-        {
-            sf::TcpSocket* client = new sf::TcpSocket();
-            if (listener.accept(*client) != sf::Socket::Status::Done)
-            {
-                std::cout << "Connection error" << std::endl;
-                client->disconnect();
-                delete client;
-            }
-            else
-            {
-                std::cout << "Client added" << std::endl;
-                room->AddClient(client);
-            }
-        }*/
 
-        std::cout << "Game started" << std::endl;
-        std::packaged_task<void()> task(std::bind(&Room::PlayGame, room));
-        rooms.push_back(std::make_tuple(std::thread(std::move(task)), room));
+        for (auto remove : toRemove)
+        {
+            remove->disconnect();
+            selector.remove(*remove);
+            delete remove;
+            auto it = std::find(connections.begin(), connections.end(), remove);
+            if (it != connections.end())
+                connections.erase(it);
+        }
+        toRemove.clear();
+
+        std::vector<Room*> endedRooms;
+        for (auto& runningRoom : rooms)
+        {
+            if (!runningRoom.first->IsPlaying())
+            {
+                delete runningRoom.first;
+                endedRooms.push_back(runningRoom.first);
+            }
+        }
+
+        for (auto endedRoom : endedRooms)
+            rooms.erase(endedRoom);
     }
 }

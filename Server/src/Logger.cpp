@@ -2,12 +2,17 @@
 
 using namespace JC9;
 
-void Logger::Log(const std::string& message)
+Logger::Logger() : out("Log.txt")
 {
-    (*out) << message;
+
 }
 
-void Logger::SetOutput(std::ostream& out)
+std::string Logger::GetDate()const
 {
-    this->out = &out;
+
+}
+
+void Logger::Log(const std::string& message)
+{
+    //(*out) << message;
 }

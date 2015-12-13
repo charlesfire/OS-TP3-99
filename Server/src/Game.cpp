@@ -16,9 +16,9 @@ Game::~Game()
     players.clear();
 }
 
-Player* Game::AddPlayer()
+Player* Game::AddPlayer(const std::string& username, sf::Uint16 score)
 {
-    Player* player = new Player("");
+    Player* player = new Player(username, score);
     for (unsigned int i(0); i < 3; i++)
         player->AddCard(deck.PickACard());
     players.push_back(player);
