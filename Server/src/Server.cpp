@@ -33,7 +33,7 @@ Server::~Server()
     for (auto& room : rooms)
         delete room.first;
 
-    db.execute("UPDATE Players SET Connected = 0");
+    db.execute("UPDATE Players Set Connected = 0");
 }
 
 void Server::Run()
