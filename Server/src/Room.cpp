@@ -44,9 +44,9 @@ void Room::AddClient(sf::TcpSocket* client, const std::string& username, sf::Uin
 
 void Room::EndGame(const Player* loser)
 {
+    std::cout << "Game finished" << std::endl;
     for (auto client : clients)
     {
-        std::cout << "Game finished" << std::endl;
         CryptedPacket response;
         response << MessageType::GameFinished;
         if (client.first != loser)
@@ -55,23 +55,28 @@ void Room::EndGame(const Player* loser)
             response << "D";
         client.second->send(response);
         response.clear();
-        sqlite3pp::command cmd(db, "UPDATE Players SET Score = ? WHERE Username = ?");
+        sqlite3pp::command cmd(db, "UPDATE Players SET Score = ?, Connected = 0 WHERE Username = ?");
         cmd.bind(1, client.first->GetScore() + ((client.first != loser)? 1 : 0));
         cmd.bind(2, client.first->GetUsername().c_str());
+        cmd.execute();
     }
 
     CryptedPacket leaderboard;
     sqlite3pp::query qry(db, "SELECT Username, Score FROM Players ORDER BY Score DESC LIMIT 5");
-    for (auto entry : qry)
-    {
-        sf::Uint16 score;
-        std::string username;
-        entry.getter() >> username >> score;
-        leaderboard << username << score;
-    }
 
     for (auto client : clients)
+    {
+        leaderboard.clear();
+        leaderboard << MessageType::Leaderboard;
+        for (auto entry : qry)
+        {
+            sf::Uint16 score;
+            std::string username;
+            entry.getter() >> username >> score;
+            leaderboard << username << score;
+        }
         client.second->send(leaderboard);
+    }
     isPlaying = false;
 }
 
@@ -98,7 +103,7 @@ void Room::PlayGame()
                 CryptedPacket packet;
                 auto status = client.second->receive(packet);
 
-                if (status == sf::Socket::Status::Disconnected || sf::Socket::Status::Error)
+                if (status == sf::Socket::Status::Disconnected || status == sf::Socket::Status::Error)
                 {
                     EndGame(client.first);
                     return;

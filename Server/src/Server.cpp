@@ -3,6 +3,8 @@
 #include <chrono>
 #include <iostream>
 #include <SFML/Network/TcpSocket.hpp>
+
+#include <SFML/Network.hpp>
 #include "CryptedPacket.hpp"
 #include "Encryptor.hpp"
 #include "MessageType.hpp"
@@ -18,8 +20,20 @@ Server::Server(const unsigned int port) : connections(), db("TP3.db"), listener(
 
 Server::~Server()
 {
+    for (auto connection : connections)
+    {
+        connection->disconnect();
+        delete connection;
+        selector.remove(*connection);
+        auto it = std::find(connections.begin(), connections.end(), connection);
+        if (it != connections.end())
+            connections.erase(it);
+    }
+
     for (auto& room : rooms)
         delete room.first;
+
+    db.execute("UPDATE Players SET Connected = 0");
 }
 
 void Server::Run()
@@ -36,6 +50,7 @@ void Server::Run()
             if (listener.accept(*connection) != sf::Socket::Status::Done)
             {
                 std::cout << "Connection error" << std::endl;
+                connection->disconnect();
                 toRemove.push_back(connection);
             }
             else
@@ -56,6 +71,7 @@ void Server::Run()
                     if (status == sf::Socket::Status::Disconnected || status == sf::Socket::Status::Error)
                     {
                         std::cout << "Client disconnected" << std::endl;
+                        connection->disconnect();
                         toRemove.push_back(connection);
                     }
                     else
@@ -112,12 +128,12 @@ void Server::Run()
 
         for (auto remove : toRemove)
         {
-            remove->disconnect();
             selector.remove(*remove);
-            delete remove;
             auto it = std::find(connections.begin(), connections.end(), remove);
             if (it != connections.end())
                 connections.erase(it);
+            if (remove->getRemoteAddress().toInteger() == 0)
+                delete remove;
         }
         toRemove.clear();
 
@@ -126,12 +142,15 @@ void Server::Run()
         {
             if (!runningRoom.first->IsPlaying())
             {
-                delete runningRoom.first;
                 endedRooms.push_back(runningRoom.first);
+                runningRoom.second.join();
             }
         }
 
         for (auto endedRoom : endedRooms)
+        {
             rooms.erase(endedRoom);
+            delete endedRoom;
+        }
     }
 }
