@@ -2,12 +2,14 @@
 #include <iostream>
 #include <SFML/Network/Packet.hpp>
 #include <SFML/Network/TcpSocket.hpp>
+#include "Card.hpp"
 #include "CryptedPacket.hpp"
 #include "MessageType.hpp"
+#include "Player.hpp"
 
 using namespace JC9;
 
-Room::Room() : clients(), game(), selector()
+Room::Room() : clients(), db("TP3.db"), game(), isPlaying(true), selector()
 {
 
 }
@@ -23,15 +25,14 @@ Room::~Room()
     clients.clear();
 }
 
-void Room::AddClient(sf::TcpSocket* client)
+void Room::AddClient(sf::TcpSocket* client, const std::string& username, sf::Uint16 score)
 {
-    Player* player = game.AddPlayer();
+    Player* player = game.AddPlayer(username, score);
 
     auto cards = player->GetCards();
     CryptedPacket packet;
     for (auto card : cards)
     {
-        std::cout << "Card sended : " << (int)card.GetType() << (int)card.GetNumber() << std::endl;
         packet << MessageType::CardPicked << card;
         client->send(packet);
         packet.clear();
@@ -41,9 +42,46 @@ void Room::AddClient(sf::TcpSocket* client)
     clients.emplace(player, client);
 }
 
+void Room::EndGame(const Player* loser)
+{
+    for (auto client : clients)
+    {
+        CryptedPacket response;
+        response << MessageType::GameFinished;
+        if (client.first != loser)
+            response << "V";
+        else
+            response << "D";
+        client.second->send(response);
+        response.clear();
+        sqlite3pp::command cmd(db, "UPDATE Players SET Score = ?, Connected = 0 WHERE Username = ?");
+        cmd.bind(1, client.first->GetScore() + ((client.first != loser)? 1 : 0));
+        cmd.bind(2, client.first->GetUsername().c_str());
+        cmd.execute();
+    }
+
+    CryptedPacket leaderboard;
+    sqlite3pp::query qry(db, "SELECT Username, Score FROM Players ORDER BY Score DESC LIMIT 5");
+
+    for (auto client : clients)
+    {
+        leaderboard.clear();
+        leaderboard << MessageType::Leaderboard;
+        for (auto entry : qry)
+        {
+            sf::Uint16 score;
+            std::string username;
+            entry.getter() >> username >> score;
+            leaderboard << username << score;
+        }
+        client.second->send(leaderboard);
+    }
+    isPlaying = false;
+}
+
 bool Room::IsPlaying()const
 {
-    return true;
+    return isPlaying;
 }
 
 void Room::PlayGame()
@@ -64,9 +102,10 @@ void Room::PlayGame()
                 CryptedPacket packet;
                 auto status = client.second->receive(packet);
 
-                if (status != sf::Socket::Status::Done)
+                if (status == sf::Socket::Status::Disconnected || status == sf::Socket::Status::Error)
                 {
-                    // TODO : disconnect player;
+                    EndGame(client.first);
+                    return;
                 }
 
                 MessageType type;
@@ -76,13 +115,11 @@ void Room::PlayGame()
                 {
                     case MessageType::CardSelected:
                     {
-                        std::cout << "A card has been selected" << std::endl;
                         Card selectedCard;
                         packet >> selectedCard;
                         CryptedPacket response;
                         if (client.first == game.GetPlayingPlayer())
                         {
-                            std::cout << "It's the good player" << std::endl;
                             if (client.first->HasCard(selectedCard) && game.CanPlayCard(selectedCard))
                             {
                                 game.PlayCard(selectedCard);
@@ -90,7 +127,6 @@ void Room::PlayGame()
                                 response << MessageType::CardPicked << pickedCard;
                                 client.second->send(response);
 
-                                std::cout << "Card played : " << (int)selectedCard.GetNumber() << (int)selectedCard.GetType() << std::endl;
                                 for (auto otherClient : clients)
                                 {
                                     response.clear();
@@ -102,25 +138,12 @@ void Room::PlayGame()
                                 const Player* nextPlayer = game.GetPlayingPlayer();
                                 if (game.CanPlay(nextPlayer))
                                 {
-                                    std::cout << "Next player" << std::endl;
                                     response << MessageType::YourTurn;
                                     clients[nextPlayer]->send(response);
                                 }
                                 else
                                 {
-                                    for (auto otherClient : clients)
-                                    {
-                                        std::cout << "Game finished" << std::endl;
-                                        response.clear();
-                                        response << MessageType::GameFinished;
-                                        if (otherClient.first != nextPlayer)
-                                            response << "V";
-                                        else
-                                            response << "D";
-                                        otherClient.second->send(response);
-                                    }
-
-                                    // TODO : Send leaderboard
+                                    EndGame(nextPlayer);
                                     return;
                                 }
                             }

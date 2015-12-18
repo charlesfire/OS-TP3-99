@@ -13,13 +13,14 @@ namespace JC9
         public:
             Game();
             ~Game();
-            Player* AddPlayer();
+            Player* AddPlayer(const std::string& username, sf::Uint16 score);
             bool CanPlay(const Player* player)const;
             bool CanPlayCard(const Card& card)const;
             const Player* GetPlayingPlayer()const;
             sf::Int16 GetTotal()const;
             Card PickCard(const Player* player);
             void PlayCard(const Card& card);
+            void RemovePlayer(const Player* player);
         private:
             Deck deck;
             std::vector<Player*> players;

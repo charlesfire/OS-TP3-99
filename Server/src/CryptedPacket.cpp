@@ -1,4 +1,5 @@
 #include "CryptedPacket.hpp"
+#include <string>
 
 using namespace JC9;
 

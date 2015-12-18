@@ -3,6 +3,11 @@
 
 using namespace JC9;
 
+Player::Player(const std::string& username, int score) : cards(), username(username), score(score)
+{
+
+}
+
 void Player::AddCard(const Card& card)
 {
     cards.push_back(card);
@@ -13,6 +18,15 @@ const std::vector<Card>& Player::GetCards() const
     return cards;
 }
 
+const std::string& Player::GetUsername() const
+{
+    return username;
+}
+
+sf::Uint16 Player::GetScore() const
+{
+    return score;
+}
 
 bool Player::HasCard(const Card& card)const
 {
