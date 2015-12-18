@@ -2,6 +2,7 @@
 #include <iostream>
 #include <SFML/Network/Packet.hpp>
 #include <SFML/Network/TcpSocket.hpp>
+#include "Card.hpp"
 #include "CryptedPacket.hpp"
 #include "MessageType.hpp"
 #include "Player.hpp"
@@ -32,7 +33,6 @@ void Room::AddClient(sf::TcpSocket* client, const std::string& username, sf::Uin
     CryptedPacket packet;
     for (auto card : cards)
     {
-        std::cout << "Card sended : " << (int)card.GetType() << (int)card.GetNumber() << std::endl;
         packet << MessageType::CardPicked << card;
         client->send(packet);
         packet.clear();
@@ -44,7 +44,6 @@ void Room::AddClient(sf::TcpSocket* client, const std::string& username, sf::Uin
 
 void Room::EndGame(const Player* loser)
 {
-    std::cout << "Game finished" << std::endl;
     for (auto client : clients)
     {
         CryptedPacket response;
@@ -116,13 +115,11 @@ void Room::PlayGame()
                 {
                     case MessageType::CardSelected:
                     {
-                        std::cout << "A card has been selected" << std::endl;
                         Card selectedCard;
                         packet >> selectedCard;
                         CryptedPacket response;
                         if (client.first == game.GetPlayingPlayer())
                         {
-                            std::cout << "It's the good player" << std::endl;
                             if (client.first->HasCard(selectedCard) && game.CanPlayCard(selectedCard))
                             {
                                 game.PlayCard(selectedCard);
@@ -130,7 +127,6 @@ void Room::PlayGame()
                                 response << MessageType::CardPicked << pickedCard;
                                 client.second->send(response);
 
-                                std::cout << "Card played : " << (int)selectedCard.GetNumber() << (int)selectedCard.GetType() << std::endl;
                                 for (auto otherClient : clients)
                                 {
                                     response.clear();
@@ -142,7 +138,6 @@ void Room::PlayGame()
                                 const Player* nextPlayer = game.GetPlayingPlayer();
                                 if (game.CanPlay(nextPlayer))
                                 {
-                                    std::cout << "Next player" << std::endl;
                                     response << MessageType::YourTurn;
                                     clients[nextPlayer]->send(response);
                                 }

@@ -1,18 +1,26 @@
 #include "Logger.hpp"
+#include <ctime>
+#include <iomanip>
 
 using namespace JC9;
 
-Logger::Logger() : out("Log.txt")
+Logger::Logger(const std::string& path) : out(path)
 {
 
 }
 
-std::string Logger::GetDate()const
+Logger& Logger::operator<<(std::ostream& (* F)(std::ostream&))
 {
-
+    out << F;
+    std::cout << F;
+    return *this;
 }
 
-void Logger::Log(const std::string& message)
+
+std::string Logger::GetDate()
 {
-    //(*out) << message;
+    std::stringstream sstream;
+    std::time_t t = time(nullptr);
+    sstream << std::put_time(std::localtime(&t), "%c %Z");
+    return sstream.str();
 }
