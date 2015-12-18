@@ -8,7 +8,6 @@ using namespace JC9;
 
 Game::Game()
 {
-	mainWin = new sf::RenderWindow(sf::VideoMode(1280, 720, 32), "Jeu de carte 99");
 	canPlay = false;
 	gameIsOver = false;
 	totalOnGame = 0;
@@ -28,43 +27,53 @@ Game::~Game()
 		delete cartesEnMain[i];
 	}
 	delete lastPlayed;
-	delete mainWin;
 }
 
 void Game::Run()
 {
 	std::string user;
 	std::string password;
-	sf::TcpSocket::Status status = host.connect("10.17.59.194", 6666);
+	std::string ipAddress;
+	std::string port;
 
-	/*std::cout << "Veuillez entrer votre nom  d'utilisateur: " << std::endl;
+	std::cout << "Veuillez entrer le port où vous souhaitez vous connecter." << std::endl;
+	std::cin >> port;
+	std::cout << "Entrez l'adresse IP du serveur où vous voulez vous connecter: " << std::endl;
+	std::cin >> ipAddress;
+	std::cout << "Connexion au serveur en cours, veuillez patienter." << std::endl;
+
+	sf::TcpSocket::Status status = host.connect(ipAddress, std::stoi(port));
+	std::cout << "Veuillez entrer votre nom  d'utilisateur: " << std::endl;
 	std::cin >> user;
 	std::cout << "Veuillez entrer votre mot de passe: " << std::endl;
-	std::cin >> password;*/
-	while (true)
+	std::cin >> password;
+
+	CryptedPacket connection;
+	connection << MessageType::Connection;
+	connection << user;
+	connection << password;
+	status = host.send(connection);
+
+
+	while (!gameIsOver)
 	{
 		if (status != sf::TcpSocket::Status::Done)
 		{
 			break;
 		}
-
-		
+		std::cout << "En attente d'une action d'un autre joueur..." << std::endl;
 		CryptedPacket packet;
 		status = host.receive(packet);
 		system("cls");
 
 		ReactToTransaction(packet);
+
 		if (canPlay)
 		{
 			AskForCard(packet);
-		}
-		if (gameIsOver)
-		{
-			system("Pause");
-			break;
-		}
-		
+		}		
 	}
+
 	host.disconnect();
 }
 void Game::AskForCard(CryptedPacket& packet)
@@ -95,20 +104,16 @@ void Game::AskForCard(CryptedPacket& packet)
 		else
 		{
 			std::cout << "Vous avez entré un mauvais numéro, veuillez réessayer." << std::endl;
+			numCarte = 0;
 		}
 	}
 	CryptedPacket response;
 	response << MessageType::CardSelected;
 	response << *cartesEnMain[numCarte - 1];
-	//Puis on envoie une transaction au serveur.
 
+	//Puis on envoie une transaction au serveur.
 	status = host.send(response);
-	if (lastPlayed != nullptr)
-	{
-		//On enlève la carte des mains du joueur.
-		delete lastPlayed;
-		
-	}
+	//On garde en mémoire la dernière carte jouée par le joueur au cas où elle n'était pas valide.
 	lastPlayed = cartesEnMain[numCarte - 1];
 	cartesEnMain[numCarte - 1] = nullptr;
 	//Ensuite ce n'est plus à son tour et il doit attendre l'autorisation du serveur pour jouer à nouveau.
@@ -116,6 +121,11 @@ void Game::AskForCard(CryptedPacket& packet)
 
 
 }
+/// <summary>
+/// Converti le type enuméré de la carte en string.
+/// </summary>
+/// <param name="type">The type.</param>
+/// <returns></returns>
 std::string Game::ConvertToString(sf::Uint8 type)
 {
 	switch (type)
@@ -126,16 +136,20 @@ std::string Game::ConvertToString(sf::Uint8 type)
 	}
 	case Card::Club:
 	{
-		return "pique";
+		return "trèfles";
 	}
 	case Card::Heart:
 	{
 		return "coeur";
 	}
 	default:
-		return "trèfles";
+		return "pique";
 	}
 }
+/// <summary>
+/// Réagit à une transaction reçu par le serveur.
+/// </summary>
+/// <param name="packet">The packet.</param>
 void Game::ReactToTransaction(CryptedPacket& packet)
 {
 	MessageType type;
@@ -144,7 +158,15 @@ void Game::ReactToTransaction(CryptedPacket& packet)
 	{
 	case MessageType::ConnectionSucceeded:
 	{
-		canPlay = true;
+		std::cout << "Connexion réussie!" << std::endl;
+		system("Pause");
+		break;
+	}
+	case MessageType::ConnectionFailed:
+	{
+		std::cout << "Connexion échouée!" << std::endl;
+		system("Pause");
+		gameIsOver = true;
 		break;
 	}
 	case MessageType::CardPicked:
@@ -158,6 +180,7 @@ void Game::ReactToTransaction(CryptedPacket& packet)
 				packet >> carte;
 				std::cout << "Vous avez reçu le " << static_cast<int>(carte.GetNumber()) << " de " << ConvertToString(carte.GetType()) << std::endl;
 				cartesEnMain[i] = new Card(carte);
+
 				break;
 
 			}
@@ -167,7 +190,6 @@ void Game::ReactToTransaction(CryptedPacket& packet)
 	case MessageType::GameFinished:
 	{
 		std::string message = "";
-		gameIsOver = true;
 		packet >> message;
 		if (message == "V")
 		{
@@ -177,11 +199,17 @@ void Game::ReactToTransaction(CryptedPacket& packet)
 		{
 			std::cout << "Vous avez perdu!" << std::endl;
 		}
+		system("Pause");
 		break;
 
 	}
 	case MessageType::CardPlayed:
 	{
+		if (lastPlayed != nullptr)
+		{
+			delete lastPlayed;
+			lastPlayed = nullptr;
+		}
 		Card carte;
 		packet >> carte;
 		std::string name;
@@ -189,6 +217,7 @@ void Game::ReactToTransaction(CryptedPacket& packet)
 		packet >> totalOnGame;
 		std::cout << "Nouveau total: " << totalOnGame << std::endl;
 		std::cout << "Une carte à été jouée: " << std::endl << static_cast<int>(carte.GetNumber()) << " de " << ConvertToString(carte.GetType()) << std::endl;
+		system("Pause");
 		break;
 	}
 	case MessageType::YourTurn:
@@ -208,6 +237,22 @@ void Game::ReactToTransaction(CryptedPacket& packet)
 			}
 		}
 		std::cout << "Veuillez sélectionner une carte valide!" << std::endl;
+		break;
+	}
+	case MessageType::Leaderboard:
+	{
+		gameIsOver = true;
+		std::cout << "Voici le leaderboard actuel: " << std::endl;
+		for (int i = 0; i < 5; i++)
+		{
+			std::string name;
+			packet >> name;
+			sf::Uint16 score;
+			packet >> score;
+			std::cout << i + 1 << ". " << name << ": " << score << " points" << std::endl;
+		}
+		system("Pause");
+
 	}
 	default:
 	{
